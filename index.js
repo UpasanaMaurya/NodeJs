@@ -1,60 +1,60 @@
-const http = require("http");
 const fs = require("fs");
-
 const index = fs.readFileSync("index.html", "utf-8");
 const data = JSON.parse(fs.readFileSync("data.json", "utf-8"));
 const products = data.products;
 
-const server = http.createServer((req, res) => {
-  console.log(req.url, req.method);
+// __________express__________
 
-  if (req.url.startsWith("/product")) {
-    const id = req.url.split("/")[2];
-    const product = products.find((p) => p.id === +id);
-    console.log(product);
-    res.setHeader("Content-Type", "text/html");
-    let modifiedIndex = index
-      .replace("**title**", product.title)
-      .replace("**description**", product.description)
-      .replace("**brand**", product.brand)
-      .replace("**thumbnail**", product.thumbnail);
-    res.end(modifiedIndex);
-    return;
-  }
-  //"/product":
-  // res.setHeader("Content-Type", "text/html");
-  // let modifiedIndex = index
-  //   .replace("**title**", product.title)
-  //   .replace("**description**", product.description)
-  //   .replace("**brand**", product.brand)
-  //   .replace("**thumbnail**", product.thumbnail);
-  // res.end(modifiedIndex);
-  //break;
+const express = require("express");
+const server = express();
+// _____________bodyParser________________
+server.use(express.json());
+//server.use(express.urlencoded)
+server.use(express.static("public"));
 
-  switch (req.url) {
-    case "/":
-      res.setHeader("Content-Type", "text/html");
-      res.end(index);
-      break;
-    case "/api":
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify(data));
-      break;
-    default:
-      res.writeHead(404, "error");
-      res.end();
-  }
-  console.log("server stsrted");
+// ____________middlewear________________
+server.use((req, res, next) => {
+  console.log(
+    req.method,
+    req.ip,
+    req.hostname,
+    req.get("User-Agent"),
+    new Date()
+  );
+  next();
 });
-server.listen(8080);
+const auth = (req, res, next) => {
+  console.log(req.query);
+  if (req.query.password == "123") {
+    next();
+  } else {
+    res.sendStatus(401);
+  }
+};
+//server.use(auth)
+// ______API ,EndPoint,router_______
+server.get("/", auth, (req, res) => {
+  res.json({ type: "GET1" });
+});
+server.post("/", (req, res) => {
+  res.json({ type: "POST" });
+});
+server.put("/", (req, res) => {
+  res.json({ type: "PUT" });
+});
+server.delete("/", (req, res) => {
+  res.json({ type: "DELETE" });
+});
+server.patch("/", () => {
+  res.json({ type: "PATCH" });
+});
 
-// ****************basic step********************
+server.get("/demo", (req, res) => {
+  // res.send('hello')
+  //res.json(products)
+  //res.sendStatus(404)
+});
 
-// const http = require("http");
-// const server = http.createServer((req, res) => {
-//   console.log("server started");
-//   res.setHeader("Dummy", "Dammyvalue");
-//   res.setHeader("content-type", "text/html");
-//   res.end("hiiiiiiiiiiiiiiiiii");
-// });
-// server.listen(8080);
+server.listen(8080, () => {
+  console.log("server started");
+});
